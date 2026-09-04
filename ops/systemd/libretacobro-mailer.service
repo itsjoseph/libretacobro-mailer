@@ -1,0 +1,28 @@
+# /etc/systemd/system/libretacobro-mailer.service
+# Worker que despacha el outbox de correos (tabla EmailsPendientes) por SMTP.
+# Instalación: copiar el jar a /opt/libretacobro-mailer/, crear /etc/libretacobro-mailer.env
+# (chmod 600, variables de abajo), `systemctl enable --now libretacobro-mailer`.
+# Recuerda apagar el dispatcher del WAR: APP_OUTBOX_DISPATCHER_ENABLED=false.
+[Unit]
+Description=Libreta de Cobro - worker de correos (outbox)
+After=network-online.target mariadb.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=libretacobro
+Group=libretacobro
+WorkingDirectory=/opt/libretacobro-mailer
+# MAILER_DB_URL, MAILER_DB_USER, MAILER_DB_PASSWORD, SPRING_MAIL_HOST/PORT/USERNAME,
+# SMTP_PASSWORD, APP_MAIL_FROM, OUTBOX_POLL_MS (ver README del mailer)
+EnvironmentFile=/etc/libretacobro-mailer.env
+ExecStart=/usr/bin/java -Duser.timezone=America/Mexico_City -Xms64m -Xmx256m -jar /opt/libretacobro-mailer/libretacobro-mailer.jar
+Restart=on-failure
+RestartSec=10
+SuccessExitStatus=143
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
