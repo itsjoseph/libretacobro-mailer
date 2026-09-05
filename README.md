@@ -11,9 +11,13 @@ frontera natural).
 | WAR (`libretaCobroAPI`) | **Encola**: escribe filas completas (asunto, cuerpo HTML, adjunto, remitente) en `EmailsPendientes` dentro de sus transacciones de negocio | Despachar (con el flag apagado) |
 | Este worker | **Despacha**: poll cada 30s + envío SMTP + backoff exponencial (1m→24h, 8 intentos) + drop auditado en `Auditoria` | Encolar, plantillas, PDFs, lógica de negocio |
 
-La tabla `EmailsPendientes` **es el contrato** entre ambos: cualquier cambio de
-esquema debe aterrizar en los dos lados. La máquina de estados vive en el módulo
-compartido `libretacobro-outbox` (mismo jar que usa el WAR).
+La tabla `EmailsPendientes` **es el contrato** entre ambos y desde 2026-09-04 está
+escrito en código: `OutboxContrato` (jar compartido `libretacobro-outbox` 0.1.1) lista
+las columnas y los estados, y `ContratoOutboxCheck` lo verifica al arrancar contra la BD
+— si falta una columna el worker **no arranca** (fallo claro en el log en vez de ticks
+rotos). El WAR hace la misma verificación de su lado; el procedimiento para cambiar el
+contrato está en `docs/contrato-outbox.md` del WAR. La máquina de estados vive en el
+mismo jar.
 
 ## Operación
 
